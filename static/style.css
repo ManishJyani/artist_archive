@@ -1,0 +1,78 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { font-family: system-ui, sans-serif; margin: 0; background: #f6f4f0; color: #222; }
+
+/* 16px text stops iPhones from zooming in on inputs; 44px is a comfortable tap size */
+input, textarea, button { width: 100%; min-height: 44px; padding: .7rem; margin: .4rem 0; border-radius: 8px; border: 1px solid #ccc; font: inherit; font-size: 16px; }
+textarea { resize: vertical; }
+button { background: #222; color: #fff; border: none; cursor: pointer; }
+button.secondary { background: #e8e4dc; color: #222; }
+button.small { width: auto; min-height: 36px; padding: .4rem .8rem; margin: 0; }
+button:disabled { opacity: .6; }
+.msg, #msg { color: #c0392b; }
+
+/* Login page */
+.card { width: min(360px, 100% - 2rem); margin: 10vh auto; background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 12px #0001; }
+
+/* Header */
+.bar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; background: #fff; box-shadow: 0 1px 4px #0001; }
+.bar h1 { flex: 1; margin: 0; font-size: 1.2rem; }
+.who { display: none; color: #666; font-size: .9rem; }
+.filter { display: flex; align-items: center; gap: .5rem; padding: .75rem 1rem 0; }
+
+/* Gallery: 2 columns on phones, more on bigger screens */
+.gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; padding: 1rem; }
+.entry { background: #fff; border-radius: 10px; overflow: hidden; cursor: pointer; box-shadow: 0 1px 6px #0001; }
+.entry img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.entry-body { padding: .5rem .6rem .6rem; }
+.entry h3 { margin: 0 0 .3rem; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tags { display: flex; flex-wrap: wrap; gap: .3rem; }
+.chip { width: auto; min-height: 28px; margin: 0; padding: .2rem .55rem; border-radius: 999px; background: #e8e4dc; color: #444; font-size: .8rem; }
+.empty { text-align: center; color: #777; padding: 2rem 1rem; }
+
+/* Floating + button, easy to reach with a thumb */
+/* Floating + button, centered at the bottom */
+.fab { position: fixed; left: 0; right: 0; margin: 0 auto; bottom: calc(1.25rem + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; font-size: 2rem; line-height: 1; padding: 0; z-index: 2; box-shadow: 0 4px 12px #0003; }
+
+/* Dialogs: full screen on phones */
+dialog { border: none; padding: 0; width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; background: #fff; }
+dialog::backdrop { background: #0008; }
+#upload-form { padding: 1rem; }
+#upload-form h2 { margin-top: 0; }
+.preview { width: 100%; max-height: 40vh; object-fit: contain; border-radius: 8px; background: #f0eee9; }
+.actions { display: flex; gap: .5rem; }
+.detail img { width: 100%; max-height: 60vh; object-fit: contain; background: #111; display: block; }
+.detail-body { padding: 1rem; }
+.detail-body h2 { margin: 0; }
+.date { color: #777; font-size: .85rem; }
+.desc { white-space: pre-wrap; line-height: 1.5; }
+
+/* Tablets and laptops */
+@media (min-width: 600px) {
+  .gallery { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; padding: 1.5rem; }
+  .who { display: inline; }
+  dialog { width: min(600px, 90vw); height: auto; max-height: 90vh; margin: auto; border-radius: 12px; }
+}
+
+/* Button feedback: grow slightly on hover, shrink slightly when pressed */
+button { transition: transform .15s ease, box-shadow .15s ease; -webkit-tap-highlight-color: transparent; }
+@media (hover: hover) {
+  button:not(:disabled):hover { transform: scale(1.05); }
+  .fab:hover { transform: scale(1.12); }
+}
+button:not(:disabled):active { transform: scale(0.95); }
+
+/* Leave space so the + button doesn't cover the last row of pictures */
+.gallery { padding-bottom: 6rem; }
+
+/* Mood chips: bigger, easier to tap on phones */
+.quick { margin: .2rem 0 .4rem; gap: .4rem; }
+.chip.mood { min-height: 36px; padding: .35rem .8rem; font-size: .9rem; }
+.chip.selected { background: #222; color: #fff; }
+
+/* Search: its own full-width row on phones, inline next to the title on bigger screens */
+.bar { flex-wrap: wrap; }
+.search { order: 10; flex: 1 1 100%; margin: 0; }
+@media (min-width: 600px) {
+  .search { order: 0; flex: 0 1 320px; }
+}

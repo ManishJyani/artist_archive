@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Diary</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>My Diary</h1>
+    <input id="search" class="search" type="search" placeholder="🔍 Search title or tags..." autocomplete="off">
+    <span id="who" class="who"></span>
+    <span id="who" class="who"></span>
+    <button id="logout" class="secondary small">Log out</button>
+  </header>
+
+  <div id="filter" class="filter" hidden>
+    Showing <strong id="filter-tag"></strong>
+    <button id="clear-filter" class="secondary small">Clear</button>
+  </div>
+
+  <main id="gallery" class="gallery"></main>
+  <p id="empty" class="empty" hidden>No pictures yet. Tap + to add your first one.</p>
+
+  <button id="add" class="fab" aria-label="Add picture">+</button>
+
+  <dialog id="upload-dialog">
+    <form id="upload-form">
+      <h2>New entry</h2>
+      <input name="image" type="file" accept="image/jpeg,image/png,image/webp" required>
+      <img id="preview" class="preview" hidden alt="">
+      <input name="title" placeholder="Title" maxlength="200">
+      <textarea name="description" rows="5" placeholder="Write about this piece..."></textarea>
+      <input name="tags" placeholder="Tags, comma separated (e.g. ink, sketch)">
+      <div id="quick-tags" class="tags quick"></div>
+      <p id="upload-msg" class="msg"></p>
+      <div class="actions">
+        <button type="button" class="secondary" id="cancel-upload">Cancel</button>
+        <button type="submit" id="save-btn">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="detail-dialog" class="detail">
+    <img id="d-img" alt="">
+    <div class="detail-body">
+      <h2 id="d-title"></h2>
+      <p id="d-date" class="date"></p>
+      <p id="d-desc" class="desc"></p>
+      <div id="d-tags" class="tags"></div>
+      <button class="secondary" id="close-detail">Close</button>
+    </div>
+  </dialog>
+
+  <script src="/static/diary.js"></script>
+</body>
+</html>

@@ -19,6 +19,10 @@ import uuid
 from fastapi import File, Form, UploadFile
 from typing import Optional
 
+from pathlib import Path
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
 load_dotenv()
 DATABASE_URL = os.environ["DATABASE_URL"]
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true") == "true"
@@ -26,11 +30,13 @@ supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 BUCKET = "artworks"
 
 app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
 @app.get("/")
 def home():
-    return {"message": "Artist Diary is live"}
+    return FileResponse(BASE_DIR / "static" / "index.html")
 
 
 @app.get("/health/db")
@@ -208,8 +214,18 @@ def to_dict(row):
 
 
 @app.get("/entries")
-def list_entries(tag: Optional[str] = None, user_id: int = Depends(get_current_user)):
+def list_entries(
+    tag: Optional[str] = None,
+    q: Optional[str] = None,
+    user_id: int = Depends(get_current_user),
+):
     tag = tag.strip().lower() if tag else None
+    q = q.strip()[:100] if q and q.strip() else None
+    # Escape % and _ so the user's text is matched literally
+    pattern = None
+    if q:
+        pattern = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
     with psycopg.connect(DATABASE_URL) as conn:
         rows = conn.execute(
             ENTRY_SQL + """
@@ -217,10 +233,15 @@ def list_entries(tag: Optional[str] = None, user_id: int = Depends(get_current_u
               AND (%s::text IS NULL OR EXISTS (
                     SELECT 1 FROM entry_tags et2 JOIN tags t2 ON t2.id = et2.tag_id
                     WHERE et2.entry_id = e.id AND t2.name = %s))
+              AND (%s::text IS NULL
+                   OR e.title ILIKE %s
+                   OR EXISTS (
+                     SELECT 1 FROM entry_tags et3 JOIN tags t3 ON t3.id = et3.tag_id
+                     WHERE et3.entry_id = e.id AND t3.name ILIKE %s))
             GROUP BY e.id
             ORDER BY e.created_at DESC
             LIMIT 50""",
-            (user_id, tag, tag),
+            (user_id, tag, tag, pattern, pattern, pattern),
         ).fetchall()
     return [to_dict(r) for r in rows]
 

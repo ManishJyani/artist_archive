@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Artist Diary</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="card">
+    <h1>Artist Diary 🎨</h1>
+    <form id="auth-form">
+      <input id="email" type="email" placeholder="Email" required>
+      <input id="password" type="password" placeholder="Password (min 8 chars)" minlength="8" required>
+      <button type="submit" data-action="login">Log in</button>
+      <button type="submit" data-action="signup" class="secondary">Sign up</button>
+    </form>
+    <p id="msg"></p>
+  </main>
+  <script src="/static/auth.js"></script>
+</body>
+</html>
