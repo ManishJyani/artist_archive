@@ -268,3 +268,29 @@ body:has(.stage) { overflow: hidden; }
 }
 .track.dragging .thumb { transition: height .2s; }
 .track:hover::before, .track.dragging::before, .track:hover .thumb, .track.dragging .thumb { height: 6px; }
+
+/* Footer credit: centred at the bottom of every page */
+.credit {
+  position: fixed; left: 0; right: 0; z-index: 40; pointer-events: none;
+  bottom: calc(.5rem + env(safe-area-inset-bottom));
+  text-align: center; font-size: .78rem; letter-spacing: .02em; color: #4a3b2eb3;
+  font-family: Georgia, "Times New Roman", serif; font-style: italic;
+}
+
+/* Diary page: lift the + button, position bar and messages above the footer */
+.fab { bottom: calc(2.4rem + env(safe-area-inset-bottom)); }
+.track { bottom: calc(7.3rem + env(safe-area-inset-bottom)); }
+.toast { bottom: calc(9rem + env(safe-area-inset-bottom)); }
+
+/* Apple's San Francisco (SF Pro) font everywhere */
+:root {
+  --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+body, input, textarea, button, select,
+.bar h1, .card h1, .credit,
+#upload-form h2, #edit-form h2, .detail-body h2 {
+  font-family: var(--font-apple);
+}
+/* No italics anywhere */
+*, *::before, *::after { font-style: normal !important; }
