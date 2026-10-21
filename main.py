@@ -17,10 +17,12 @@ truststore.inject_into_ssl()
 
 import uuid
 from fastapi import File, Form, UploadFile
-from typing import Optional
+from typing import Optional,List
+
+
 
 from pathlib import Path
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
@@ -256,3 +258,82 @@ def get_entry(entry_id: int, user_id: int = Depends(get_current_user)):
     if not row:
         raise HTTPException(status_code=404, detail="Entry not found")
     return to_dict(row)
+
+class EntryUpdate(BaseModel):
+    title: Optional[str] = Field(None, max_length=200)
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+DELETE_UNUSED_TAGS = """
+DELETE FROM tags t WHERE t.user_id = %s
+AND NOT EXISTS (SELECT 1 FROM entry_tags et WHERE et.tag_id = t.id)
+"""
+
+
+@app.patch("/entries/{entry_id}")
+def update_entry(entry_id: int, body: EntryUpdate, user_id: int = Depends(get_current_user)):
+    fields = body.model_dump(exclude_unset=True)  # only the fields the user actually sent
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        owned = conn.execute(
+            "SELECT 1 FROM entries WHERE id = %s AND user_id = %s FOR UPDATE",
+            (entry_id, user_id),
+        ).fetchone()
+        if not owned:
+            raise HTTPException(status_code=404, detail="Entry not found")
+
+        # Column names come from this fixed list, never from user input
+        sets, params = ["updated_at = now()"], []
+        for col in ("title", "description"):
+            if col in fields:
+                sets.append(f"{col} = %s")
+                params.append(fields[col] or "")
+        conn.execute(f"UPDATE entries SET {', '.join(sets)} WHERE id = %s", (*params, entry_id))
+
+        if "tags" in fields:
+            conn.execute("DELETE FROM entry_tags WHERE entry_id = %s", (entry_id,))
+            names = sorted({t.strip().lower() for t in (fields["tags"] or []) if t.strip()})
+            for name in names:
+                tag_id = conn.execute(
+                    """INSERT INTO tags (user_id, name) VALUES (%s, %s)
+                       ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
+                       RETURNING id""",
+                    (user_id, name),
+                ).fetchone()[0]
+                conn.execute(
+                    "INSERT INTO entry_tags (entry_id, tag_id) VALUES (%s, %s)", (entry_id, tag_id)
+                )
+            conn.execute(DELETE_UNUSED_TAGS, (user_id,))
+
+        row = conn.execute(ENTRY_SQL + " WHERE e.id = %s GROUP BY e.id", (entry_id,)).fetchone()
+    return to_dict(row)
+
+
+@app.delete("/entries/{entry_id}", status_code=204)
+def delete_entry(entry_id: int, user_id: int = Depends(get_current_user)):
+    with psycopg.connect(DATABASE_URL) as conn:
+        row = conn.execute(
+            "DELETE FROM entries WHERE id = %s AND user_id = %s RETURNING image_path",
+            (entry_id, user_id),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        conn.execute(DELETE_UNUSED_TAGS, (user_id,))
+
+    supabase.storage.from_(BUCKET).remove([row[0]])  # remove the image file too
+    return Response(status_code=204)
+
+
+@app.get("/entries/{entry_id}/download")
+def download_entry(entry_id: int, user_id: int = Depends(get_current_user)):
+    with psycopg.connect(DATABASE_URL) as conn:
+        row = conn.execute(
+            "SELECT image_path FROM entries WHERE id = %s AND user_id = %s",
+            (entry_id, user_id),
+        ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    # Short-lived link that tells the browser to save the file instead of opening it
+    res = supabase.storage.from_(BUCKET).create_signed_url(row[0], 60, {"download": True})
+    return RedirectResponse(res.get("signedURL") or res.get("signedUrl"))

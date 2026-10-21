@@ -20,11 +20,17 @@ document.getElementById("auth-form").addEventListener("submit", async (e) => {
     email: document.getElementById("email").value,
     password: document.getElementById("password").value,
   };
+   const btn = e.submitter;
+  btn.classList.add("loading");
+  btn.disabled = true;
   try {
-    if (e.submitter.dataset.action === "signup") await post("/auth/signup", body);
+    if (btn.dataset.action === "signup") await post("/auth/signup", body);
     await post("/auth/login", body);
     location.href = "/static/diary.html";
   } catch (err) {
     msg.textContent = err.message;
+  } finally {
+    btn.classList.remove("loading");
+    btn.disabled = false;
   }
 });
